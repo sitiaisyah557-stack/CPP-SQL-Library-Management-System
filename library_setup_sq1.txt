@@ -1,0 +1,78 @@
+CREATE DATABASE IF NOT EXISTS library_system;
+USE library_system;
+
+CREATE TABLE admins (
+    admin_id INT AUTO_INCREMENT PRIMARY KEY,  -- 管理员ID，自动生成
+    username VARCHAR(50) NOT NULL UNIQUE,     -- 用户名
+    password VARCHAR(50) NOT NULL             -- 密码
+);
+
+-- 插入一个默认管理员账号 (账号: admin, 密码: 123456)
+INSERT INTO admins (username, password) VALUES ('admin', '123456');
+
+CREATE TABLE users (
+    user_id INT PRIMARY KEY,              -- 读者ID/学号 (手动输入，不用自增)
+    name VARCHAR(50) NOT NULL,            -- 姓名
+    password VARCHAR(50) DEFAULT '123',   -- 密码 (默认123)
+    contact VARCHAR(20)                   -- 联系方式 (可选)
+);
+
+-- 插入一个测试读者 (学号: 1001, 姓名: 张三)
+INSERT INTO users (user_id, name) VALUES (1001, '张三');
+
+CREATE TABLE books (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,   -- 图书ID (贴在书背后的条码)
+    title VARCHAR(100) NOT NULL,              -- 书名
+    author VARCHAR(50),                       -- 作者
+    category VARCHAR(50),                     -- 分类 (如: 计算机, 文学)
+    status TINYINT DEFAULT 1                  -- 状态: 1=在馆, 0=已借出
+);
+
+-- 插入几本测试书
+
+INSERT INTO books (title, author, category) VALUES ('C++ Primer', 'Stanley', 'Computer');
+INSERT INTO books (title, author, category) VALUES ('活着', '余华', 'Literature');
+
+CREATE TABLE borrow_records (
+    record_id INT AUTO_INCREMENT PRIMARY KEY, -- 流水号
+    user_id INT,                              -- 谁借的 (外键 -> users)
+    book_id INT,                              -- 借了哪本 (外键 -> books)
+    borrow_date DATE,                         -- 借出日期
+    return_date DATE DEFAULT NULL,            -- 归还日期 (NULL表示还没还)
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (book_id) REFERENCES books(book_id)
+);
+
+USE library_system;
+
+-- 1. 暂时关闭外键检查 (防止删除数据时报错)
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- 2. 清空所有表的数据 (TRUNCATE 比 DELETE 更干净，ID会重新从1开始算)
+TRUNCATE TABLE borrow_records;
+TRUNCATE TABLE books;
+TRUNCATE TABLE users;
+TRUNCATE TABLE admins;
+
+-- 3. 重新插入纯英文数据
+
+-- (1) 管理员: admin / 123456
+INSERT INTO admins (username, password) VALUES ('admin', '123456');
+
+-- (2) 读者: ID 1001, Name: John Doe, Pass: 123
+INSERT INTO users (user_id, name, password) VALUES (1001, 'John Doe', '123');
+-- 再加一个读者: ID 1002, Name: Alice Smith
+INSERT INTO users (user_id, name, password) VALUES (1002, 'Alice Smith', '123');
+
+-- (3) 图书: 插入几本经典的英文书
+INSERT INTO books (title, author, category, status) VALUES 
+('C++ Primer', 'Stanley B. Lippman', 'Computer', 1),
+('The Great Gatsby', 'F. Scott Fitzgerald', 'Novel', 1),
+('Clean Code', 'Robert C. Martin', 'Computer', 1),
+('To Kill a Mockingbird', 'Harper Lee', 'Novel', 1);
+
+-- 4. 恢复外键检查
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- 5. 确认一下结果
+SELECT * FROM books;
